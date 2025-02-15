@@ -11,6 +11,10 @@ import fileApi from '@/utils/file'
 import CodeMirror from 'codemirror'
 
 const store = useStore()
+// eslint-disable-next-line ts/ban-ts-comment
+// @ts-ignore
+window.__MD_STORE__ = store
+
 const displayStore = useDisplayStore()
 const { isDark, output, editor, readingTime } = storeToRefs(store)
 
@@ -174,7 +178,7 @@ function initEditor() {
   const editorDom = document.querySelector<HTMLTextAreaElement>(`#editor`)!
 
   if (!editorDom.value) {
-    editorDom.value = store.posts[store.currentPostIndex].content
+    // editorDom.value = store.posts[store.currentPostIndex].content
   }
   editor.value = CodeMirror.fromTextArea(editorDom, {
     mode: `text/x-markdown`,
@@ -243,6 +247,10 @@ function initEditor() {
       }
     }
   })
+
+  // eslint-disable-next-line ts/ban-ts-comment
+  // @ts-ignore
+  window.__MD_EDITOR__ = editor.value
 }
 
 const container = ref(null)
@@ -357,6 +365,20 @@ onMounted(() => {
   initEditor()
   onEditorRefresh()
   mdLocalToRemote()
+
+  window.addEventListener(`message`, (e) => {
+    if (e.data.type === `UPDATE_STORE`) {
+      const data = e.data.data || []
+      console.log(`data`, data)
+      if (data.length > 0) {
+        store.addPosts(data, true)
+      }
+    }
+  })
+
+  window.parent.postMessage({
+    type: `MD_EDITOR_READY`,
+  }, `*`)
 })
 </script>
 
@@ -417,7 +439,7 @@ onMounted(() => {
         <div
           id="preview"
           ref="preview"
-          class="preview-wrapper flex-1 p-5"
+          class="preview-wrapper p-5"
         >
           <div id="output-wrapper" :class="{ output_night: !backLight }">
             <div class="preview border-x-1 shadow-xl">
@@ -517,9 +539,13 @@ onMounted(() => {
   border-spacing: 0;
 }
 
-.codeMirror-wrapper,
+.codeMirror-wrapper {
+  height: 100%;
+}
+
 .preview-wrapper {
   height: 100%;
+  flex: 0 0 500px;
 }
 
 .codeMirror-wrapper {

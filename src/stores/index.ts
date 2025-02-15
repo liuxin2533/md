@@ -58,7 +58,7 @@ export const useStore = defineStore(`store`, () => {
 
   const isOpenRightSlider = useStorage(addPrefix(`is_open_right_slider`), false)
 
-  const isOpenPostSlider = useStorage(addPrefix(`is_open_post_slider`), false)
+  const isOpenPostSlider = useStorage(addPrefix(`is_open_post_slider`), true)
   // 内容列表
   const posts = useStorage(addPrefix(`posts`), [{
     title: `内容1`,
@@ -67,11 +67,26 @@ export const useStore = defineStore(`store`, () => {
   // 当前内容
   const currentPostIndex = useStorage(addPrefix(`current_post_index`), 0)
 
-  const addPost = (title: string) => {
+  const addPost = (title: string, content?: string) => {
     currentPostIndex.value = posts.value.push({
       title,
-      content: `# ${title}`,
+      content: content || `# ${title}`,
     }) - 1
+  }
+
+  const addPosts = (data: { title: string, content: string }[], clear: boolean = false) => {
+    currentPostIndex.value = Number.MAX_SAFE_INTEGER
+    data = JSON.parse(JSON.stringify(data))
+    if (clear) {
+      posts.value = data
+    }
+    else {
+      posts.value.push(...data)
+    }
+
+    nextTick(() => {
+      currentPostIndex.value = 0
+    })
   }
 
   const renamePost = (index: number, title: string) => {
@@ -84,7 +99,9 @@ export const useStore = defineStore(`store`, () => {
   }
 
   watch(currentPostIndex, () => {
-    toRaw(editor.value!).setValue(posts.value[currentPostIndex.value].content)
+    if (posts.value.length >= currentPostIndex.value) {
+      toRaw(editor.value!).setValue(posts.value[currentPostIndex.value].content)
+    }
   })
 
   onMounted(() => {
@@ -488,6 +505,7 @@ export const useStore = defineStore(`store`, () => {
     posts,
     currentPostIndex,
     addPost,
+    addPosts,
     renamePost,
     delPost,
     isOpenPostSlider,

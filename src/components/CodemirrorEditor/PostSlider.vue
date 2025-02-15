@@ -53,6 +53,20 @@ function delPost() {
   isOpenDelPostConfirmDialog.value = false
   toast.success(`内容删除成功`)
 }
+
+function handleCopyTitle(title: string) {
+  copyToClipboard(title)
+  toast.success(`标题已复制`)
+}
+
+function copyToClipboard(text: string) {
+  const input = document.createElement(`input`)
+  input.value = text
+  document.body.appendChild(input)
+  input.select()
+  document.execCommand(`copy`)
+  document.body.removeChild(input)
+}
 </script>
 
 <template>
@@ -60,7 +74,7 @@ function delPost() {
     class="overflow-hidden bg-gray/20 transition-width duration-300 dark:bg-gray/40"
     :class="{
       'w-0': !store.isOpenPostSlider,
-      'w-50': store.isOpenPostSlider,
+      'w-100': store.isOpenPostSlider,
     }"
   >
     <nav
@@ -99,7 +113,19 @@ function delPost() {
         class="hover:bg-primary/90 hover:text-primary-foreground dark:bg-muted dark:hover:bg-muted dark:hover:border-primary-dark h-8 w-full inline-flex items-center justify-start gap-2 whitespace-nowrap rounded px-2 text-sm transition-colors dark:text-white dark:hover:text-white"
         @click="store.currentPostIndex = index"
       >
-        <span class="line-clamp-1">{{ post.title }}</span>
+        <TooltipProvider :delay-duration="200">
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <span class="line-clamp-1">{{ post.title }}</span>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <div>
+                <Button size="xs" class="m-r-5" @click="handleCopyTitle(post.title)">复制</Button>
+                <span>{{ post.title }}</span>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <Button size="xs" variant="ghost" class="ml-auto px-1.5">

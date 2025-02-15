@@ -94,6 +94,11 @@ function copy() {
           : `已复制渲染后的内容到剪贴板，可直接到公众号后台粘贴。`,
       )
 
+      window.parent?.postMessage({ type: `MP_EDITOR_COPY`, data: {
+        post: toRaw(store.posts[store.currentPostIndex]),
+        html: temp,
+      } }, `*`)
+
       editorRefresh()
       emit(`endCopy`)
     })
