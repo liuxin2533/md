@@ -146,7 +146,6 @@ function uploaded(imageUrl: string) {
 }
 function uploadImage(file: File, cb?: { (url: any): void, (arg0: unknown): void } | undefined) {
   isImgLoading.value = true
-
   toBase64(file)
     .then(base64Content => fileApi.fileUpload(base64Content, file))
     .then((url) => {

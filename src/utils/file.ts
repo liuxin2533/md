@@ -1,7 +1,6 @@
 import { giteeConfig, githubConfig } from '@/config'
 import fetch from '@/utils/fetch'
 import * as tokenTools from '@/utils/tokenTools'
-
 import { base64encode, safe64, utf16to8 } from '@/utils/tokenTools'
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import Buffer from 'buffer-from'
@@ -340,12 +339,40 @@ async function getMpToken(appID: string, appsecret: string, proxyOrigin: string)
   }
   return ``
 }
+
+const getParentMpTokenPromise: any = {
+  resolve: null as any,
+  reject: null as any,
+}
+
+window.addEventListener(`message`, (event) => {
+  if (event.data.type === `MP_TOKEN`) {
+    console.log(`MP_TOKEN`, event.data.data)
+    getParentMpTokenPromise.resolve(event.data.data)
+  }
+})
+
+async function getMpTokenByParent() {
+  return new Promise<string>((resolve, reject) => {
+    getParentMpTokenPromise.resolve = resolve
+    getParentMpTokenPromise.reject = reject
+    window.parent.postMessage({ type: `GET_MP_TOKEN` }, `*`)
+    setTimeout(() => {
+      resolve(``)
+    }, 2000)
+  })
+}
+
 async function mpFileUpload(file: File) {
+  // eslint-disable-next-line ts/ban-ts-comment
+  // @ts-ignore
+  let access_token = await getMpTokenByParent()
   const { appID, appsecret, proxyOrigin } = JSON.parse(
     localStorage.getItem(`mpConfig`)!,
   )
-
-  const access_token = await getMpToken(appID, appsecret, proxyOrigin)
+  if (!access_token) {
+    access_token = await getMpToken(appID, appsecret, proxyOrigin)
+  }
   if (!access_token) {
     throw new Error(`获取 access_token 失败`)
   }
